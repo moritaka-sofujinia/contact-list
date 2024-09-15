@@ -1,33 +1,113 @@
-import React, { useState, useEffect } from 'react';
-import { View, FlatList } from 'react-native';
-import { fetchContacts } from '../utility/api';
-import ContactListItem from '../components/ContactListItem';
+import React, { useEffect } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  ActivityIndicator,
+  Linking,
+  Alert
+} from "react-native";
+import { fetchContacts } from "../utils/api";
+import ContactListItem from "../components/ContactListItem";
+import CallScreen from "./Call2";
+import {
+  fetchContactsLoading,
+  fetchContactsSuccess,
+  fetchContactsError,
+} from "../components/store"; // Redux action creators
+
+import { useDispatch, useSelector } from "react-redux";
+
+const keyExtractor = ({ phone }) => phone;
 
 const Contacts = ({ navigation }) => {
-  const [contacts, setContacts] = useState([]);
+  const dispatch = useDispatch();
+  
+  // Providing a default empty array for contacts
+  // const { contacts = [], loading, error } = useSelector((state) => state.contacts);
+  const { contacts = [], loading, error } = useSelector((state) => {
+    // console.log('Redux state:', state); // Check if contacts are updating correctly
+    // console.log(contacts)
+    return state.contacts;
+  });
+  
+  // useEffect(() => {
+  //   const loadContacts = async () => {
+  //     dispatch(fetchContactsLoading());
+  //     try {
+  //       const contacts = await fetchContacts();
+  //       // console.log('Fetched contacts:', contacts)
+  //       dispatch(fetchContactsSuccess(contacts));
+  //       // alert('reached here') // success here already
+  //     } catch (e) {
+  //       console.error("Error fetching contacts: ", e);
+        
+  //       dispatch(fetchContactsError());
+  //     }
+  //   };
 
+  //   loadContacts();
+  // }, [dispatch]);
   useEffect(() => {
-    fetchContacts().then(data => setContacts(data));
-  }, []);
+    const loadContacts = async () => {
+      dispatch(fetchContactsLoading());
+      try {
+        const contacts = await fetchContacts();
+        dispatch(fetchContactsSuccess(contacts));  // Ensure this action is correctly dispatched
+        // console.log(contacts)
+      } catch (e) {
+        dispatch(fetchContactsError());
+      }
+    };
+  
+    loadContacts();
+  }, [dispatch]);
+  
+  // Safeguard against undefined contacts
+  // const contactsSorted = (contacts || []).slice().sort((a, b) => a.name.localeCompare(b.name));
+  const contactsSorted = (contacts);
 
-  const renderContact = ({ item }) => (
-    <ContactListItem
-      name={`${item.name.first} ${item.name.last}`}
-      avatar={item.picture.thumbnail}
-      phone={item.phone}
-      onPress={() => navigation.navigate('Profile', { contact: item })}
-    />
-  );
+  // Hàm handleLongPress để thực hiện cuộc gọi
+  const handleLongPress = (phone) => {
+    Linking.openURL(`tel:${phone}`)
+      .catch(err => Alert.alert('Lỗi', 'Không thể thực hiện cuộc gọi'));
+  };
+
+  const renderContact = ({ item }) => {
+    const { name, avatar, phone } = item;
+    return (
+      <ContactListItem
+        name={name}
+        avatar={avatar}
+        phone={phone}
+        onPress={() => navigation.navigate("Profile", { contact: item })}
+        onLongPress={() => handleLongPress(phone)} // Sử dụng handleLongPress
+      />
+    );
+  };
 
   return (
-    <View>
-      <FlatList
-        data={contacts}
-        renderItem={renderContact}
-        keyExtractor={item => item.phone}
-      />
+    <View style={styles.container}>
+      {loading && <ActivityIndicator color="blue" size="large" />}
+      {error && <Text>Error loading contacts...</Text>}
+      {!loading && !error && (
+        <FlatList
+          data={contactsSorted}
+          keyExtractor={keyExtractor}
+          renderItem={renderContact}
+        />
+      )}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: "white",
+    justifyContent: "center",
+    flex: 1,
+  },
+});
 
 export default Contacts;

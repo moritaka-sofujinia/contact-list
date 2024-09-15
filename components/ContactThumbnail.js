@@ -3,7 +3,14 @@ import { StyleSheet, View, TouchableOpacity, Image, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import PropTypes from 'prop-types';
 
-const ContactThumbnail = ({ name, phone, avatar, textColor, onPress }) => {
+const ContactThumbnail = ({
+  name = '',          // Set default values here
+  phone = '',
+  avatar = '',
+  textColor = 'white',
+  onPress = null,
+  onLongPress = null
+}) => {
   const colorStyle = {
     color: textColor,
   };
@@ -12,15 +19,15 @@ const ContactThumbnail = ({ name, phone, avatar, textColor, onPress }) => {
 
   return (
     <View style={styles.container}>
-      <ImageComponent onPress={onPress}>
-        <Image 
-          source={{ uri: avatar }} 
-          style={styles.avatar} 
+      <ImageComponent onPress={onPress} onLongPress={onLongPress}>
+        <Image
+          source={{
+            uri: avatar,
+          }}
+          style={styles.avatar}
         />
       </ImageComponent>
-
-      {name !== '' && <Text style={[styles.name, colorStyle]}>{name}</Text>}
-
+      <Text style={[styles.name, colorStyle]}>{name}</Text>
       {phone !== '' && (
         <View style={styles.phoneSection}>
           <Icon name="phone" size={16} style={{ color: textColor }} />
@@ -31,37 +38,48 @@ const ContactThumbnail = ({ name, phone, avatar, textColor, onPress }) => {
   );
 };
 
+// You can keep prop types for validation, but defaultProps is removed
 ContactThumbnail.propTypes = {
   name: PropTypes.string,
-  phone: PropTypes.string,
   avatar: PropTypes.string,
+  phone: PropTypes.string,
   textColor: PropTypes.string,
   onPress: PropTypes.func,
+  onLongPress: PropTypes.func
 };
-
-export default ContactThumbnail;
 
 const styles = StyleSheet.create({
   container: {
+    paddingTop: 10,
+    marginHorizontal: 15,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderColor: 'white',
+    borderWidth: 2,
   },
   name: {
-    marginTop: 10,
-    fontSize: 18,
+    fontSize: 20,
+    marginTop: 0,
+    marginBottom: 2,
     fontWeight: 'bold',
+    color: 'black',
   },
   phoneSection: {
     flexDirection: 'row',
+    marginTop: 4,
     alignItems: 'center',
-    marginTop: 5,
+    justifyContent: 'center',
   },
   phone: {
-    marginLeft: 5,
+    marginLeft: 4,
     fontSize: 16,
+    fontWeight: 'bold',
   },
 });
+
+export default ContactThumbnail;
